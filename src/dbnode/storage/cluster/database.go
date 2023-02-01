@@ -315,6 +315,7 @@ func (d *clusterDB) activeTopologyWatch() {
 			if !ok {
 				return
 			}
+			d.log.Info("Replace node: received update from kv topology watch")
 			d.log.Info("received update from kv topology watch")
 			shardSet := d.hostOrEmptyShardSet(d.watch.Get())
 			d.Database.AssignShardSet(shardSet)
