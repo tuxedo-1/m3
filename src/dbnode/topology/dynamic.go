@@ -28,9 +28,9 @@ import (
 	"github.com/m3db/m3/src/cluster/shard"
 	"github.com/m3db/m3/src/dbnode/sharding"
 	xwatch "github.com/m3db/m3/src/x/watch"
-	"sync"
-
 	"go.uber.org/zap"
+	"strconv"
+	"sync"
 )
 
 var (
