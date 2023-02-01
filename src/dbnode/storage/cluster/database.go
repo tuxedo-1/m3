@@ -167,8 +167,8 @@ func (d *clusterDB) Close() error {
 // it is safe to continue a deploy or performing topology changes. In that case,
 // we only need to determine two things:
 //
-//     1. Is the node bootstrapped?
-//     2. Are all of its shards available?
+//  1. Is the node bootstrapped?
+//  2. Are all of its shards available?
 //
 // If so, then the node has finished bootstrapping and will be able to recover
 // all of its data (assuming the default bootstrapper configuration of
@@ -324,6 +324,7 @@ func (d *clusterDB) activeTopologyWatch() {
 
 func (d *clusterDB) analyzeAndReportShardStates() {
 	placement := d.watch.Get()
+	d.log.Info("Replace node: got placement for host:" + d.hostID)
 	entry, ok := placement.LookupHostShardSet(d.hostID)
 	if !ok {
 		return
@@ -339,10 +340,13 @@ func (d *clusterDB) analyzeAndReportShardStates() {
 			switch s.State() {
 			case shard.Initializing:
 				initializing++
+				d.log.Info("Replace node: current state: INITIALIZING and shardno. " + fmt.Sprint(s.ID()) + "sourceID: " + s.SourceID())
 			case shard.Leaving:
 				leaving++
+				d.log.Info("Replace node: current state: LEAVING and shardno. " + fmt.Sprint(s.ID()))
 			case shard.Available:
 				available++
+				d.log.Info("Replace node: current state: AVAILABLE and shardno. " + fmt.Sprint(s.ID()))
 			}
 		}
 		d.metrics.initializing.Update(float64(initializing))
