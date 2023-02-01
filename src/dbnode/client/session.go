@@ -1396,6 +1396,7 @@ func (s *session) writeAttemptWithRLock(
 	// HACK: just to test it
 	state.shardsLeavingAndInitiazingCountTowardsConsistency = true
 	state.topoMap = s.state.topoMap
+	state.hostSucessMap = make(map[string]bool)
 	state.incRef()
 
 	// todo@bl: Can we combine the writeOpPool and the writeStatePool?
