@@ -22,14 +22,13 @@ package topology
 
 import (
 	"errors"
-	"sync"
-
 	"github.com/m3db/m3/src/cluster/kv"
 	"github.com/m3db/m3/src/cluster/placement"
 	"github.com/m3db/m3/src/cluster/services"
 	"github.com/m3db/m3/src/cluster/shard"
 	"github.com/m3db/m3/src/dbnode/sharding"
 	xwatch "github.com/m3db/m3/src/x/watch"
+	"sync"
 
 	"go.uber.org/zap"
 )
@@ -156,7 +155,7 @@ func (t *dynamicTopology) run() {
 		}
 
 		m, err := getMapFromUpdate(t.watch.Get(), t.hashGen)
-		t.logger.Info("Replace node: get new updated map hosts" + len(m.Hosts()))
+		t.logger.Info("Replace node: get new updated map hosts" + strconv.Itoa(len(m.Hosts())))
 		if err != nil {
 			t.logger.Warn("dynamic topology received invalid update", zap.Error(err))
 			continue
