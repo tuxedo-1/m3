@@ -22,8 +22,6 @@ package client
 
 import (
 	"fmt"
-	"sync"
-
 	"github.com/m3db/m3/src/cluster/shard"
 	"github.com/m3db/m3/src/dbnode/topology"
 	"github.com/m3db/m3/src/x/checked"
@@ -31,6 +29,9 @@ import (
 	"github.com/m3db/m3/src/x/ident"
 	"github.com/m3db/m3/src/x/pool"
 	"github.com/m3db/m3/src/x/serialize"
+	"log"
+	"strconv"
+	"sync"
 )
 
 // writeOp represents a generic write operation
@@ -49,17 +50,19 @@ type writeState struct {
 	sync.Mutex
 	refCounter
 
-	consistencyLevel                     topology.ConsistencyLevel
-	shardsLeavingCountTowardsConsistency bool
-	topoMap                              topology.Map
-	op                                   writeOp
-	nsID                                 ident.ID
-	tsID                                 ident.ID
-	tagEncoder                           serialize.TagEncoder
-	annotation                           checked.Bytes
-	majority, pending                    int32
-	success                              int32
-	errors                               []error
+	consistencyLevel                                  topology.ConsistencyLevel
+	shardsLeavingCountTowardsConsistency              bool
+	shardsLeavingAndInitiazingCountTowardsConsistency bool
+	hostSucessMap                                     map[string]bool
+	topoMap                                           topology.Map
+	op                                                writeOp
+	nsID                                              ident.ID
+	tsID                                              ident.ID
+	tagEncoder                                        serialize.TagEncoder
+	annotation                                        checked.Bytes
+	majority, pending                                 int32
+	success                                           int32
+	errors                                            []error
 
 	queues         []hostQueue
 	tagEncoderPool serialize.TagEncoderPool
@@ -139,13 +142,18 @@ func (w *writeState) completionFn(result interface{}, err error) {
 	} else {
 		available := shardState == shard.Available
 		leaving := shardState == shard.Leaving
+
+		// TODO: shardsLeavingCountTowardsConsistency and leavingAndShardsLeavingCountTowardsConsistency both cannot be true
 		leavingAndShardsLeavingCountTowardsConsistency := leaving &&
 			w.shardsLeavingCountTowardsConsistency
 		// NB(bl): Only count writes to available shards towards success.
 		// NB(r): If shard is leaving and configured to allow writes to leaving
 		// shards to count towards consistency then allow that to count
 		// to success.
-		if !available && !leavingAndShardsLeavingCountTowardsConsistency {
+
+		log.Printf("Replace node: flag value" + strconv.FormatBool(w.shardsLeavingAndInitiazingCountTowardsConsistency))
+
+		if !available && !leavingAndShardsLeavingCountTowardsConsistency && !w.shardsLeavingAndInitiazingCountTowardsConsistency {
 			var errStr string
 			switch shardState {
 			case shard.Initializing:
@@ -156,6 +164,38 @@ func (w *writeState) completionFn(result interface{}, err error) {
 				errStr = "shard %d in host %s not available (unknown state)"
 			}
 			wErr = xerrors.NewRetryableError(fmt.Errorf(errStr, w.op.ShardID(), hostID))
+		} else if !available && w.shardsLeavingAndInitiazingCountTowardsConsistency {
+			var errStr string
+			switch shardState {
+			case shard.Initializing:
+				pairedHostID, ok := w.topoMap.LookupPairedHost(hostID, w.op.ShardID())
+				if !ok {
+					errStr = "shard %d in host %s has no leaving shard"
+					wErr = xerrors.NewRetryableError(fmt.Errorf(errStr, w.op.ShardID(), hostID))
+				} else {
+					log.Printf("Replace node: paired host:" + pairedHostID)
+					if w.hostSucessMap[pairedHostID] {
+						w.success++
+						log.Printf("Replace node: success value" + string(w.success))
+					}
+					w.hostSucessMap[pairedHostID] = true
+				}
+			case shard.Leaving:
+				pairedHostID, ok := w.topoMap.LookupPairedHost(hostID, w.op.ShardID())
+				if !ok {
+					errStr = "shard %d in host %s has no initializing shard"
+					wErr = xerrors.NewRetryableError(fmt.Errorf(errStr, w.op.ShardID(), hostID))
+				} else {
+					log.Printf("Replace node: paired host:" + pairedHostID)
+					if w.hostSucessMap[pairedHostID] {
+						w.success++
+						log.Printf("Replace node: success value" + string(w.success))
+					}
+					w.hostSucessMap[pairedHostID] = true
+				}
+			default:
+				errStr = "shard %d in host %s not available (unknown state)"
+			}
 		} else {
 			w.success++
 		}
@@ -172,6 +212,7 @@ func (w *writeState) completionFn(result interface{}, err error) {
 		}
 	case topology.ConsistencyLevelMajority:
 		if w.success >= w.majority || w.pending == 0 {
+			log.Printf("Replace node: got majority")
 			w.Signal()
 		}
 	case topology.ConsistencyLevelAll:

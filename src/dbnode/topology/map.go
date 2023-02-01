@@ -33,6 +33,7 @@ type staticMap struct {
 	shardSet                 sharding.ShardSet
 	hostShardSets            []HostShardSet
 	hostShardSetsByID        map[string]HostShardSet
+	parentHostMap            map[string]map[uint32]string
 	orderedHosts             []Host
 	hostsByShard             [][]Host
 	orderedShardHostsByShard [][]orderedShardHost
@@ -48,6 +49,7 @@ func NewStaticMap(opts StaticOptions) Map {
 		shardSet:                 opts.ShardSet(),
 		hostShardSets:            hostShardSets,
 		hostShardSetsByID:        make(map[string]HostShardSet),
+		parentHostMap:            make(map[string]map[uint32]string),
 		orderedHosts:             make([]Host, 0, len(hostShardSets)),
 		hostsByShard:             make([][]Host, totalShards),
 		orderedShardHostsByShard: make([][]orderedShardHost, totalShards),
@@ -59,8 +61,10 @@ func NewStaticMap(opts StaticOptions) Map {
 		host := hostShardSet.Host()
 		topoMap.hostShardSetsByID[host.ID()] = hostShardSet
 		topoMap.orderedHosts = append(topoMap.orderedHosts, host)
+		shardToParentHost := make(map[uint32]string)
 		for _, shard := range hostShardSet.ShardSet().All() {
 			id := shard.ID()
+			shardToParentHost[shard.ID()] = shard.SourceID()
 			topoMap.hostsByShard[id] = append(topoMap.hostsByShard[id], host)
 			elem := orderedShardHost{
 				idx:   idx,
@@ -70,6 +74,7 @@ func NewStaticMap(opts StaticOptions) Map {
 			topoMap.orderedShardHostsByShard[id] =
 				append(topoMap.orderedShardHostsByShard[id], elem)
 		}
+		topoMap.parentHostMap[host.ID()] = shardToParentHost
 	}
 	fmt.Println("creating static map")
 	res2B, _ := json.Marshal(topoMap)
@@ -89,6 +94,15 @@ func (t *staticMap) Hosts() []Host {
 
 func (t *staticMap) HostShardSets() []HostShardSet {
 	return t.hostShardSets
+}
+
+func (t *staticMap) LookupPairedHost(hostID string, id uint32) (string, bool) {
+	value, ok := t.parentHostMap[hostID]
+	if !ok {
+		return "", false
+	}
+	parentHost, ok := value[id]
+	return parentHost, ok
 }
 
 func (t *staticMap) LookupHostShardSet(id string) (HostShardSet, bool) {

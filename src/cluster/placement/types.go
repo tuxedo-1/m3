@@ -504,6 +504,8 @@ type operations interface {
 		err error,
 	)
 
+	GetParentHost(instanceID string, shardID uint32) (Instance, error)
+
 	// MarkShardsAvailable marks given shards as available.
 	MarkShardsAvailable(instanceID string, shardIDs ...uint32) (Placement, error)
 

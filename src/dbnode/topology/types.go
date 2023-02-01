@@ -103,6 +103,10 @@ type Map interface {
 	// HostShardSets returns all HostShardSets in the map
 	HostShardSets() []HostShardSet
 
+	// LookupPairedHost returns a paired host for this shard if this shard is in initializing it returns corresponding leaving
+	// and if this shard is in leaving it returns corresponding initializing host id.
+	LookupPairedHost(hostID string, id uint32) (string, bool)
+
 	// LookupHostShardSet returns a HostShardSet for a host in the map
 	LookupHostShardSet(hostID string) (HostShardSet, bool)
 
