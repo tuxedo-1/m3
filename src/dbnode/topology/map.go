@@ -21,6 +21,7 @@
 package topology
 
 import (
+	"fmt"
 	"github.com/m3db/m3/src/cluster/shard"
 	"github.com/m3db/m3/src/dbnode/sharding"
 	"github.com/m3db/m3/src/x/ident"
@@ -69,7 +70,9 @@ func NewStaticMap(opts StaticOptions) Map {
 				append(topoMap.orderedShardHostsByShard[id], elem)
 		}
 	}
-
+	fmt.Println("creating static map")
+	res2B, _ := json.Marshal(topoMap)
+	fmt.Println("topo map" + string(res2B))
 	return &topoMap
 }
 

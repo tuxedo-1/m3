@@ -118,7 +118,7 @@ func newDynamicTopology(opts DynamicOptions) (DynamicTopology, error) {
 		return nil, err
 	}
 	<-watch.C()
-	logger.Info("initial topology / placement value received")
+	logger.Info("Replace node:initial topology / placement value received")
 
 	m, err := getMapFromUpdate(watch.Get(), opts.HashGen())
 	if err != nil {
@@ -156,6 +156,7 @@ func (t *dynamicTopology) run() {
 		}
 
 		m, err := getMapFromUpdate(t.watch.Get(), t.hashGen)
+		t.logger.Info("Replace node: get new updated map hosts" + len(m.Hosts()))
 		if err != nil {
 			t.logger.Warn("dynamic topology received invalid update", zap.Error(err))
 			continue
