@@ -27,6 +27,7 @@ import (
 	"github.com/m3db/m3/src/dbnode/sharding"
 	"github.com/m3db/m3/src/x/ident"
 	xwatch "github.com/m3db/m3/src/x/watch"
+	"log"
 )
 
 type staticMap struct {
@@ -34,6 +35,7 @@ type staticMap struct {
 	hostShardSets            []HostShardSet
 	hostShardSetsByID        map[string]HostShardSet
 	parentHostMap            map[string]map[uint32]string
+	childHostMap             map[string]map[uint32]string
 	orderedHosts             []Host
 	hostsByShard             [][]Host
 	orderedShardHostsByShard [][]orderedShardHost
@@ -50,6 +52,7 @@ func NewStaticMap(opts StaticOptions) Map {
 		hostShardSets:            hostShardSets,
 		hostShardSetsByID:        make(map[string]HostShardSet),
 		parentHostMap:            make(map[string]map[uint32]string),
+		childHostMap:             make(map[string]map[uint32]string),
 		orderedHosts:             make([]Host, 0, len(hostShardSets)),
 		hostsByShard:             make([][]Host, totalShards),
 		orderedShardHostsByShard: make([][]orderedShardHost, totalShards),
@@ -65,6 +68,9 @@ func NewStaticMap(opts StaticOptions) Map {
 		for _, shard := range hostShardSet.ShardSet().All() {
 			id := shard.ID()
 			shardToParentHost[shard.ID()] = shard.SourceID()
+			shardToChildHost := make(map[uint32]string)
+			shardToChildHost[shard.ID()] = host.ID()
+			topoMap.childHostMap[shard.SourceID()] = shardToChildHost
 			topoMap.hostsByShard[id] = append(topoMap.hostsByShard[id], host)
 			elem := orderedShardHost{
 				idx:   idx,
@@ -79,6 +85,12 @@ func NewStaticMap(opts StaticOptions) Map {
 	fmt.Println("creating static map")
 	res2B, _ := json.Marshal(topoMap)
 	fmt.Println("topo map" + string(res2B))
+
+	map1, _ := json.Marshal(topoMap.parentHostMap)
+	fmt.Println("parentHostMap" + string(map1))
+
+	map2, _ := json.Marshal(topoMap.childHostMap)
+	fmt.Println("parentHostMap" + string(map2))
 	return &topoMap
 }
 
@@ -96,13 +108,28 @@ func (t *staticMap) HostShardSets() []HostShardSet {
 	return t.hostShardSets
 }
 
-func (t *staticMap) LookupPairedHost(hostID string, id uint32) (string, bool) {
+func (t *staticMap) LookupParentHost(hostID string, id uint32) (string, bool) {
 	value, ok := t.parentHostMap[hostID]
+	bs, _ := json.Marshal(value)
+	log.Printf("Replace node1: parent host:" + string(bs))
 	if !ok {
 		return "", false
 	}
 	parentHost, ok := value[id]
+	log.Printf("Replace node2: parent host:" + parentHost)
 	return parentHost, ok
+}
+
+func (t *staticMap) LookupChildHost(hostID string, id uint32) (string, bool) {
+	value, ok := t.childHostMap[hostID]
+	bs, _ := json.Marshal(value)
+	log.Printf("Replace node1: childHost host:" + string(bs))
+	if !ok {
+		return "", false
+	}
+	childHost, ok := value[id]
+	log.Printf("Replace node2: childHost host:" + childHost)
+	return childHost, ok
 }
 
 func (t *staticMap) LookupHostShardSet(id string) (HostShardSet, bool) {

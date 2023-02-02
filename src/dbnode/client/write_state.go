@@ -168,12 +168,14 @@ func (w *writeState) completionFn(result interface{}, err error) {
 			var errStr string
 			switch shardState {
 			case shard.Initializing:
-				pairedHostID, ok := w.topoMap.LookupPairedHost(hostID, w.op.ShardID())
+				pairedHostID, ok := w.topoMap.LookupParentHost(hostID, w.op.ShardID())
 				if !ok {
 					errStr = "shard %d in host %s has no leaving shard"
 					wErr = xerrors.NewRetryableError(fmt.Errorf(errStr, w.op.ShardID(), hostID))
 				} else {
 					log.Printf("Replace node: paired host:" + pairedHostID)
+					log.Printf("Replace node: host ID:" + hostID)
+					log.Printf("Replace node: shard ID:" + string(w.op.ShardID()))
 					if w.hostSucessMap[pairedHostID] {
 						w.success++
 						log.Printf("Replace node: success value" + string(w.success))
@@ -181,12 +183,14 @@ func (w *writeState) completionFn(result interface{}, err error) {
 					w.hostSucessMap[pairedHostID] = true
 				}
 			case shard.Leaving:
-				pairedHostID, ok := w.topoMap.LookupPairedHost(hostID, w.op.ShardID())
+				pairedHostID, ok := w.topoMap.LookupChildHost(hostID, w.op.ShardID())
 				if !ok {
 					errStr = "shard %d in host %s has no initializing shard"
 					wErr = xerrors.NewRetryableError(fmt.Errorf(errStr, w.op.ShardID(), hostID))
 				} else {
 					log.Printf("Replace node: paired host:" + pairedHostID)
+					log.Printf("Replace node: host ID:" + hostID)
+					log.Printf("Replace node: shard ID:" + string(w.op.ShardID()))
 					if w.hostSucessMap[pairedHostID] {
 						w.success++
 						log.Printf("Replace node: success value" + string(w.success))
