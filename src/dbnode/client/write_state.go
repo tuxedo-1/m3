@@ -179,7 +179,7 @@ func (w *writeState) completionFn(result interface{}, err error) {
 					log.Printf("Replace node: shard ID: %d", w.op.ShardID())
 					if w.hostSucessMap[pairedHostID] {
 						w.success++
-						log.Printf("Replace node: success value" + string(w.success))
+						log.Printf("Replace node: success value %d", w.success)
 					}
 					w.hostSucessMap[hostID] = true
 				}
@@ -194,7 +194,7 @@ func (w *writeState) completionFn(result interface{}, err error) {
 					log.Printf("Replace node: shard ID: %d", w.op.ShardID())
 					if w.hostSucessMap[pairedHostID] {
 						w.success++
-						log.Printf("Replace node: success value" + string(w.success))
+						log.Printf("Replace node: success value %d", w.success)
 					}
 					w.hostSucessMap[hostID] = true
 				}
@@ -216,7 +216,7 @@ func (w *writeState) completionFn(result interface{}, err error) {
 			w.Signal()
 		}
 	case topology.ConsistencyLevelMajority:
-		if w.success >= 3 {
+		if w.success >= w.majority || w.pending == 0 {
 			log.Printf("Replace node: got majority for shard: %d", w.op.ShardID())
 			map1, _ := json.Marshal(w.hostSucessMap)
 			fmt.Println("w.hostSucessMap" + string(map1))
