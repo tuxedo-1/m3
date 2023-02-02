@@ -216,7 +216,7 @@ func (w *writeState) completionFn(result interface{}, err error) {
 			w.Signal()
 		}
 	case topology.ConsistencyLevelMajority:
-		if w.success >= w.majority || w.pending == 0 {
+		if w.success >= 3 {
 			log.Printf("Replace node: got majority for shard: %d", w.op.ShardID())
 			map1, _ := json.Marshal(w.hostSucessMap)
 			fmt.Println("w.hostSucessMap" + string(map1))
