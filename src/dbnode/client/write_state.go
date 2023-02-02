@@ -181,7 +181,7 @@ func (w *writeState) completionFn(result interface{}, err error) {
 						w.success++
 						log.Printf("Replace node: success value" + string(w.success))
 					}
-					w.hostSucessMap[pairedHostID] = true
+					w.hostSucessMap[hostID] = true
 				}
 			case shard.Leaving:
 				pairedHostID, ok := w.topoMap.LookupChildHost(hostID, w.op.ShardID())
@@ -196,7 +196,7 @@ func (w *writeState) completionFn(result interface{}, err error) {
 						w.success++
 						log.Printf("Replace node: success value" + string(w.success))
 					}
-					w.hostSucessMap[pairedHostID] = true
+					w.hostSucessMap[hostID] = true
 				}
 			default:
 				errStr = "shard %d in host %s not available (unknown state)"
