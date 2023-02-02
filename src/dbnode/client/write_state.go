@@ -21,6 +21,7 @@
 package client
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/m3db/m3/src/cluster/shard"
 	"github.com/m3db/m3/src/dbnode/topology"
@@ -175,7 +176,7 @@ func (w *writeState) completionFn(result interface{}, err error) {
 				} else {
 					log.Printf("Replace node: paired host:" + pairedHostID)
 					log.Printf("Replace node: host ID:" + hostID)
-					log.Printf("Replace node: shard ID:" + string(w.op.ShardID()))
+					log.Printf("Replace node: shard ID: %d", w.op.ShardID())
 					if w.hostSucessMap[pairedHostID] {
 						w.success++
 						log.Printf("Replace node: success value" + string(w.success))
@@ -190,7 +191,7 @@ func (w *writeState) completionFn(result interface{}, err error) {
 				} else {
 					log.Printf("Replace node: paired host:" + pairedHostID)
 					log.Printf("Replace node: host ID:" + hostID)
-					log.Printf("Replace node: shard ID:" + string(w.op.ShardID()))
+					log.Printf("Replace node: shard ID: %d", w.op.ShardID())
 					if w.hostSucessMap[pairedHostID] {
 						w.success++
 						log.Printf("Replace node: success value" + string(w.success))
@@ -216,7 +217,9 @@ func (w *writeState) completionFn(result interface{}, err error) {
 		}
 	case topology.ConsistencyLevelMajority:
 		if w.success >= w.majority || w.pending == 0 {
-			log.Printf("Replace node: got majority")
+			log.Printf("Replace node: got majority for shard: %d", w.op.ShardID())
+			map1, _ := json.Marshal(w.hostSucessMap)
+			fmt.Println("w.hostSucessMap" + string(map1))
 			w.Signal()
 		}
 	case topology.ConsistencyLevelAll:
