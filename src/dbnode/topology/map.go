@@ -67,10 +67,12 @@ func NewStaticMap(opts StaticOptions) Map {
 		shardToParentHost := make(map[uint32]string)
 		for _, shard := range hostShardSet.ShardSet().All() {
 			id := shard.ID()
-			shardToParentHost[shard.ID()] = shard.SourceID()
 			shardToChildHost := make(map[uint32]string)
 			shardToChildHost[shard.ID()] = host.ID()
-			topoMap.childHostMap[shard.SourceID()] = shardToChildHost
+			if shard.SourceID() != "" {
+				shardToParentHost[shard.ID()] = shard.SourceID()
+				topoMap.childHostMap[shard.SourceID()] = shardToChildHost
+			}
 			topoMap.hostsByShard[id] = append(topoMap.hostsByShard[id], host)
 			elem := orderedShardHost{
 				idx:   idx,
