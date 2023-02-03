@@ -124,6 +124,7 @@ func (w *writeState) completionFn(result interface{}, err error) {
 	w.Lock()
 	w.pending--
 
+	log.Printf("Replace node: pending value %d", w.pending)
 	var wErr error
 
 	if err != nil {
@@ -203,6 +204,7 @@ func (w *writeState) completionFn(result interface{}, err error) {
 			}
 		} else {
 			w.success++
+			log.Printf("Replace node: got success from %s and sucess value is %d", hostID, w.success)
 		}
 	}
 
