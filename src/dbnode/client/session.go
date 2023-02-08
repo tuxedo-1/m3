@@ -304,9 +304,10 @@ func newSession(opts Options) (clientSession, error) {
 			checkedBytes: opts.CheckedBytesPool(),
 			id:           opts.IdentifierPool(),
 		},
-		writeShardsInitializing:              opts.WriteShardsInitializing(),
-		shardsLeavingCountTowardsConsistency: opts.ShardsLeavingCountTowardsConsistency(),
-		metrics:                              newSessionMetrics(scope),
+		writeShardsInitializing:                           opts.WriteShardsInitializing(),
+		shardsLeavingCountTowardsConsistency:              opts.ShardsLeavingCountTowardsConsistency(),
+		shardsLeavingAndInitiazingCountTowardsConsistency: opts.ShardsLeavingAndInitiazingCountTowardsConsistency(),
+		metrics: newSessionMetrics(scope),
 	}
 	s.reattemptStreamBlocksFromPeersFn = s.streamBlocksReattemptFromPeers
 	s.pickBestPeerFn = s.streamBlocksPickBestPeer
