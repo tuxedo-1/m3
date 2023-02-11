@@ -203,19 +203,6 @@ func (t *dynamicTopology) MarkShardsAvailable(
 	return err
 }
 
-func (t *dynamicTopology) getParentHost(
-	instanceID string,
-	shardID uint32,
-) (placement.Instance, error) {
-	opts := placement.NewOptions()
-	ps, err := t.services.PlacementService(t.opts.ServiceID(), opts)
-	if err != nil {
-		return nil, err
-	}
-	instance, err := ps.GetParentHost(instanceID, shardID)
-	return instance, nil
-}
-
 func getMapFromUpdate(data interface{}, hashGen sharding.HashGen) (Map, error) {
 	service, ok := data.(services.Service)
 	if !ok {
