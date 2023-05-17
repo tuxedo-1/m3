@@ -241,9 +241,11 @@ func (w *writeState) setHostSuccessList(hostID, pairedHostID string) {
 	if findHost(w.hostSuccessList, w.reusableByteID) {
 		w.success++
 		w.successAsLeavingAndInitializingCountTowardsConsistency = true
+		fmt.Println("making successAsLeavingAndInitializingCountTowardsConsistency as true")
 	}
 	w.reusableByteID.Reset(ident.StringID(hostID).Bytes())
 	w.hostSuccessList = append(w.hostSuccessList, w.reusableByteID)
+	fmt.Println("host successList length" + string(len(w.hostSuccessList)))
 }
 
 type writeStatePool struct {
